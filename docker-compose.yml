@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  chromadb:
+    image: chromadb/chroma
+    ports:
+      - "8000:8000"
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  app:
+    build: ./app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docs:/app/docs    # so app can read PDFs you drop in /docs
+    depends_on:
+      - chromadb
+      - ollama
+
+volumes:
+  ollama_data:

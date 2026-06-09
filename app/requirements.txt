@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-text-splitters
+langchain-ollama
+chromadb
+pypdf
+sentence-transformers
+requests
+python-multipart
