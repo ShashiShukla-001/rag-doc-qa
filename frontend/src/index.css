@@ -1,0 +1,39 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:        #0F1117;
+  --surface:   #1E2130;
+  --surface2:  #252A3D;
+  --border:    #2E3450;
+  --violet:    #7C3AED;
+  --violet-dim:#4C1D95;
+  --cyan:      #22D3EE;
+  --lavender:  #C4B5FD;
+  --text:      #E8E9F0;
+  --text-muted:#8890B0;
+  --danger:    #F87171;
+  --success:   #34D399;
+
+  --font-ui:   'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--violet-dim); }

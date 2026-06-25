@@ -22,6 +22,19 @@ services:
     depends_on:
       - chromadb
       - ollama
+    environment:
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - OLLAMA_HOST=ollama
+      - OLLAMA_PORT=11434
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
 
 volumes:
+  chromadb_data:
   ollama_data:

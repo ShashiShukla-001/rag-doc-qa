@@ -1,0 +1,131 @@
+.wrapper {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+/* User messages sit on the right */
+.wrapper.user {
+  flex-direction: row-reverse;
+}
+
+/* ── Avatar ── */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.03em;
+}
+
+.user .avatar {
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  color: white;
+}
+
+.assistant .avatar {
+  background: var(--surface2);
+  color: var(--lavender);
+  border: 1px solid var(--border);
+}
+
+.error .avatar {
+  background: rgba(248, 113, 113, 0.2);
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* ── Body ── */
+.body {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user .body {
+  align-items: flex-end;
+}
+
+/* ── Bubble ── */
+.text {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user .text {
+  background: linear-gradient(135deg, var(--violet-dim), #312E81);
+  color: var(--text);
+  border-bottom-right-radius: 4px;
+}
+
+.assistant .text {
+  background: var(--surface2);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.error .text {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* ── Sources section ── */
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sourcesToggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.sourcesToggle:hover {
+  color: var(--cyan);
+}
+
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Individual chunk ── */
+.chunk {
+  background: var(--bg);
+  border-left: 2px solid var(--violet-dim);
+  padding: 6px 10px;
+}
+
+.chunkText {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.chunkPage {
+  font-size: 11px;
+  color: var(--violet);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
