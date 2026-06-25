@@ -8,13 +8,22 @@ venv/
 
 # Environment
 .env
+.env.*
 
 # ChromaDB
 chroma/
 chroma_db/
 
-# Uploaded PDFs
-docs/*.pdf
+# Uploaded documents (may contain personal/private files)
+docs/*
+!docs/.gitkeep
+!docs/screenshots/
+!docs/screenshots/**
+!docs/screenshots/.gitkeep
+
+# Test artifacts
+test.pdf
+*.tmp
 
 # IDE
 .vscode/
