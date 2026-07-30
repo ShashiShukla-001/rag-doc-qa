@@ -7,5 +7,6 @@ langchain-ollama
 chromadb
 pypdf
 sentence-transformers
+rank_bm25
 requests
 python-multipart
