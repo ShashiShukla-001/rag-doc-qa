@@ -16,8 +16,10 @@ import styles from './ChatMessage.module.css';
  * showing you exactly which chunk of your PDF the answer came from.
  * This is the RAG "grounding" made visible.
  */
-export default function ChatMessage({ role, text, sources }) {
+export default function ChatMessage({ role, text, sources, streaming }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  // Hide empty assistant bubble while waiting for the first token
+  const showBubble = role !== 'assistant' || Boolean(text);
 
   return (
     <div className={`${styles.wrapper} ${styles[role]}`}>
@@ -27,11 +29,16 @@ export default function ChatMessage({ role, text, sources }) {
       </div>
 
       <div className={styles.body}>
-        {/* Message text */}
-        <p className={styles.text}>{text}</p>
+        {/* Message text — cursor while tokens are still arriving */}
+        {showBubble && (
+          <p className={styles.text}>
+            {text}
+            {streaming && <span className={styles.cursor} aria-hidden="true" />}
+          </p>
+        )}
 
         {/* Sources toggle — only shown on assistant messages that have sources */}
-        {sources && sources.length > 0 && (
+        {sources && sources.length > 0 && Boolean(text) && (
           <div className={styles.sources}>
             <button
               className={styles.sourcesToggle}

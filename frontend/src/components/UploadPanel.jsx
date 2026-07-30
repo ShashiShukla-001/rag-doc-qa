@@ -4,24 +4,23 @@ import styles from './UploadPanel.module.css';
 /**
  * UploadPanel
  * -----------
- * Lets the user pick a PDF and POST it to /ingest.
- * Reports back to App via onUploadSuccess(filename) so the
- * chat panel knows which doc is loaded.
- *
- * State managed here:
- *  - dragOver   : bool — user is dragging a file over the zone
- *  - uploading  : bool — fetch is in flight
- *  - progress   : string — status message shown under the button
- *  - error      : string | null
+ * Upload PDFs into a multi-document library and switch the active one.
  */
-export default function UploadPanel({ onUploadSuccess, currentDoc }) {
+export default function UploadPanel({
+  documents,
+  currentDoc,
+  onSelectDoc,
+  onUploadSuccess,
+  onDeleteDoc,
+  libraryError,
+}) {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState('');
   const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(null);
   const fileRef = useRef(null);
 
-  // ── Core upload logic ─────────────────────────────────────────
   async function uploadFile(file) {
     if (!file || file.type !== 'application/pdf') {
       setError('Please drop a PDF file.');
@@ -54,18 +53,33 @@ export default function UploadPanel({ onUploadSuccess, currentDoc }) {
         throw new Error(message);
       }
 
-      const data = await res.json();           // { message: "Ingested 47 chunks from file.pdf" }
+      const data = await res.json();
       setProgress(data.message);
-      onUploadSuccess(file.name);              // tell App which doc is active
+      onUploadSuccess(data.filename || file.name);
     } catch (err) {
       setError(err.message);
       setProgress('');
     } finally {
       setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
   }
 
-  // ── Drag-and-drop handlers ────────────────────────────────────
+  async function deleteDoc(filename) {
+    if (deleting) return;
+
+    setError(null);
+    setDeleting(filename);
+    try {
+      await onDeleteDoc(filename);
+      setProgress(`Removed ${filename}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   function onDrop(e) {
     e.preventDefault();
     setDragOver(false);
@@ -73,24 +87,20 @@ export default function UploadPanel({ onUploadSuccess, currentDoc }) {
   }
 
   function onDragOver(e) { e.preventDefault(); setDragOver(true); }
-  function onDragLeave()  { setDragOver(false); }
-
-  // ── Click-to-browse ───────────────────────────────────────────
+  function onDragLeave() { setDragOver(false); }
   function onFileChange(e) { uploadFile(e.target.files[0]); }
 
   return (
     <aside className={styles.panel}>
-      {/* Header */}
       <div className={styles.header}>
         <span className={styles.logo}>⬡</span>
         <span className={styles.logoText}>RAG Q&amp;A</span>
       </div>
 
       <p className={styles.hint}>
-        Upload a PDF, then ask questions about it below.
+        Upload PDFs to your library, select one, then ask questions about it.
       </p>
 
-      {/* Drop zone */}
       <div
         className={`${styles.dropzone} ${dragOver ? styles.active : ''} ${uploading ? styles.loading : ''}`}
         onDrop={onDrop}
@@ -123,27 +133,61 @@ export default function UploadPanel({ onUploadSuccess, currentDoc }) {
         )}
       </div>
 
-      {/* Status messages */}
       {progress && !error && (
         <p className={styles.success}>{progress}</p>
       )}
-      {error && (
-        <p className={styles.error}>{error}</p>
+      {(error || libraryError) && (
+        <p className={styles.error}>{error || libraryError}</p>
       )}
 
-      {/* Currently loaded doc */}
-      {currentDoc && (
-        <div className={styles.docBadge}>
-          <span className={styles.docIcon}>📄</span>
-          <span className={styles.docName}>{currentDoc}</span>
-        </div>
-      )}
+      <div className={styles.library}>
+        <p className={styles.libraryTitle}>
+          Library
+          {documents.length > 0 && (
+            <span className={styles.libraryCount}>{documents.length}</span>
+          )}
+        </p>
 
-      {/* Architecture note — helps you understand your own system */}
+        {documents.length === 0 ? (
+          <p className={styles.libraryEmpty}>No documents yet.</p>
+        ) : (
+          <ul className={styles.docList}>
+            {documents.map(doc => {
+              const active = doc.filename === currentDoc;
+              return (
+                <li key={doc.filename} className={`${styles.docItem} ${active ? styles.docItemActive : ''}`}>
+                  <button
+                    type="button"
+                    className={styles.docSelect}
+                    onClick={() => onSelectDoc(doc.filename)}
+                    aria-current={active ? 'true' : undefined}
+                  >
+                    <span className={styles.docName}>{doc.filename}</span>
+                    <span className={styles.docMeta}>
+                      {doc.chunks} chunk{doc.chunks === 1 ? '' : 's'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.docDelete}
+                    title={`Remove ${doc.filename}`}
+                    aria-label={`Remove ${doc.filename}`}
+                    disabled={deleting === doc.filename}
+                    onClick={() => deleteDoc(doc.filename)}
+                  >
+                    {deleting === doc.filename ? '…' : '×'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
       <div className={styles.archNote}>
         <p className={styles.archTitle}>How it works</p>
-        <p>PDF → chunks (1000 chars) → embeddings → ChromaDB</p>
-        <p>Then: question → vector search → llama3 → answer</p>
+        <p>PDF → chunks → embeddings → ChromaDB (kept per file)</p>
+        <p>Ask → search active doc → llama3 stream → answer</p>
       </div>
     </aside>
   );

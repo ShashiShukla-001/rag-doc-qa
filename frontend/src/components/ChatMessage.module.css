@@ -74,6 +74,20 @@
   border-bottom-left-radius: 4px;
 }
 
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--cyan, #67e8f9);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
 .error .text {
   background: rgba(248, 113, 113, 0.1);
   color: var(--danger);

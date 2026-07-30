@@ -124,20 +124,90 @@
   padding: 8px 12px;
 }
 
-/* ── Current doc badge ── */
-.docBadge {
+/* ── Document library ── */
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.libraryTitle {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(124, 58, 237, 0.15);
-  border: 1px solid rgba(124, 58, 237, 0.35);
-  border-radius: 8px;
-  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
-.docIcon {
-  font-size: 16px;
-  flex-shrink: 0;
+.libraryCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lavender);
+}
+
+.libraryEmpty {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.docList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.docItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 4px 4px 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.docItem:hover {
+  border-color: rgba(124, 58, 237, 0.45);
+}
+
+.docItemActive {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.45);
+}
+
+.docSelect {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
 }
 
 .docName {
@@ -145,6 +215,40 @@
   font-weight: 500;
   color: var(--lavender);
   word-break: break-all;
+}
+
+.docMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.docDelete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.docDelete:hover:not(:disabled),
+.docDelete:focus-visible {
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.12);
+  outline: none;
+}
+
+.docDelete:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* ── Architecture note ── */

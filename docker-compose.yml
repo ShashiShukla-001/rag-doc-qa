@@ -5,6 +5,10 @@ services:
     image: chromadb/chroma
     ports:
       - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
 
   ollama:
     image: ollama/ollama
