@@ -12,6 +12,8 @@ export default function UploadPanel({
   onSelectDoc,
   onUploadSuccess,
   onDeleteDoc,
+  onPreviewDoc,
+  previewOpen,
   libraryError,
 }) {
   const [dragOver, setDragOver] = useState(false);
@@ -167,6 +169,18 @@ export default function UploadPanel({
                       {doc.chunks} chunk{doc.chunks === 1 ? '' : 's'}
                     </span>
                   </button>
+                  {active && (
+                    <button
+                      type="button"
+                      className={`${styles.docPreview} ${previewOpen ? styles.docPreviewActive : ''}`}
+                      title={`Preview ${doc.filename}`}
+                      aria-label={`Preview ${doc.filename}`}
+                      aria-pressed={previewOpen ? 'true' : 'false'}
+                      onClick={() => onPreviewDoc?.()}
+                    >
+                      ⧉
+                    </button>
+                  )}
                   <button
                     type="button"
                     className={styles.docDelete}
@@ -188,6 +202,7 @@ export default function UploadPanel({
         <p className={styles.archTitle}>How it works</p>
         <p>PDF → chunks → embeddings → ChromaDB (kept per file)</p>
         <p>Ask → search active doc → llama3 stream → answer</p>
+        <p>Click a source → jump to that PDF page</p>
       </div>
     </aside>
   );

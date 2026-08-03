@@ -94,6 +94,13 @@
   border: 1px solid rgba(248, 113, 113, 0.25);
 }
 
+.cancelled {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
 /* ── Sources section ── */
 .sources {
   display: flex;
@@ -128,6 +135,29 @@
   background: var(--bg);
   border-left: 2px solid var(--violet-dim);
   padding: 6px 10px;
+  text-align: left;
+}
+
+.chunkButton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-left: 2px solid var(--violet-dim);
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.chunkButton:hover,
+.chunkButton:focus-visible {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.35);
+  border-left-color: var(--cyan);
+  outline: none;
 }
 
 .chunkText {
@@ -142,4 +172,11 @@
   color: var(--violet);
   font-family: var(--font-mono);
   font-weight: 500;
+}
+
+.chunkHint {
+  font-size: 10px;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  opacity: 0.85;
 }

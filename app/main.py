@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 import asyncio
 import json
@@ -43,6 +43,24 @@ def _safe_pdf_name(filename: str | None) -> str:
 async def get_documents():
     documents = await asyncio.to_thread(list_documents)
     return {"documents": documents}
+
+
+@app.get("/documents/{filename}/file")
+async def get_document_file(filename: str):
+    """Serve the stored PDF for in-browser preview (inline disposition)."""
+    name = _safe_pdf_name(filename)
+    file_path = os.path.join(DOCS_DIR, name)
+    if not os.path.isfile(file_path):
+        raise HTTPException(
+            status_code=404,
+            detail="PDF file not found on disk. Re-upload the document.",
+        )
+    return FileResponse(
+        path=file_path,
+        media_type="application/pdf",
+        filename=name,
+        content_disposition_type="inline",
+    )
 
 
 @app.delete("/documents/{filename}")
@@ -96,6 +114,9 @@ async def ask_question(request: QuestionRequest):
         try:
             async for event in stream_answer(request.question, filename):
                 yield f"data: {json.dumps(event)}\n\n"
+        except asyncio.CancelledError:
+            # Client aborted (Stop button / navigation) — end quietly
+            raise
         except Exception as exc:
             error_event = {"type": "error", "detail": str(exc)}
             yield f"data: {json.dumps(error_event)}\n\n"

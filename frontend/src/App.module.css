@@ -4,3 +4,87 @@
   overflow: hidden;
   background: var(--bg);
 }
+
+.layout.resizing {
+  cursor: col-resize;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.resizeHandle {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: var(--border);
+  position: relative;
+  z-index: 2;
+  transition: background 0.15s;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+  background: var(--text-muted);
+  opacity: 0.55;
+}
+
+.resizeHandle:hover,
+.resizeHandle:focus-visible,
+.resizing .resizeHandle {
+  background: rgba(124, 58, 237, 0.55);
+  outline: none;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after,
+.resizing .resizeHandle::after {
+  background: var(--lavender);
+  opacity: 1;
+}
+
+.previewTab {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 28px;
+  padding: 18px 0;
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  background: var(--surface);
+  color: var(--lavender);
+  cursor: pointer;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, color 0.15s, width 0.15s;
+}
+
+.previewTab:hover,
+.previewTab:focus-visible {
+  width: 32px;
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--cyan);
+  outline: none;
+}
+
+.previewTabLabel {
+  display: block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}

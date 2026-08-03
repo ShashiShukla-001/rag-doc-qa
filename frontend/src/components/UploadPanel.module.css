@@ -239,6 +239,30 @@
   cursor: pointer;
 }
 
+.docPreview {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.docPreview:hover,
+.docPreview:focus-visible,
+.docPreviewActive {
+  color: var(--cyan);
+  background: rgba(34, 211, 238, 0.12);
+  outline: none;
+}
+
 .docDelete:hover:not(:disabled),
 .docDelete:focus-visible {
   color: var(--danger);

@@ -6,18 +6,24 @@ import styles from './ChatPanel.module.css';
  * ChatPanel
  * ---------
  * Conversation for the currently selected document.
- * messages / setMessages are owned by App (per-document history).
+ * While /ask is in flight, a Stop button aborts the SSE stream.
  */
-export default function ChatPanel({ currentDoc, messages, setMessages }) {
+export default function ChatPanel({
+  currentDoc,
+  messages,
+  setMessages,
+  onSourceClick,
+  previewOpen,
+  onTogglePreview,
+}) {
   const [input, setInput] = useState('');
-  const [thinking, setThinking] = useState(false);
+  const [busy, setBusy] = useState(false);
   const bottomRef = useRef(null);
   const messagesRef = useRef(null);
   const stickToBottomRef = useRef(true);
   const textareaRef = useRef(null);
+  const abortRef = useRef(null);
 
-  // Only auto-scroll while the user is already near the bottom.
-  // Scrolling up during a stream pauses follow-along until they return.
   function onMessagesScroll() {
     const el = messagesRef.current;
     if (!el) return;
@@ -28,7 +34,7 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
   useEffect(() => {
     if (!stickToBottomRef.current) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, thinking]);
+  }, [messages, busy]);
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -37,16 +43,23 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
     ta.style.height = Math.min(ta.scrollHeight, 160) + 'px';
   }, [input]);
 
-  // New question / doc switch: resume sticking to the latest message
   useEffect(() => {
     stickToBottomRef.current = true;
   }, [currentDoc]);
 
-  // Stop showing a busy input when the user switches documents mid-stream
+  // Abort in-flight generation when switching documents
   useEffect(() => {
-    setThinking(false);
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setBusy(false);
     setInput('');
   }, [currentDoc]);
+
+  useEffect(() => () => {
+    abortRef.current?.abort();
+  }, []);
 
   function updateLastAssistant(updater) {
     setMessages(prev => {
@@ -61,9 +74,13 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
     });
   }
 
+  function stopGeneration() {
+    abortRef.current?.abort();
+  }
+
   async function sendQuestion() {
     const question = input.trim();
-    if (!question || thinking) return;
+    if (!question || busy) return;
 
     if (!currentDoc) {
       setMessages(prev => [...prev, {
@@ -74,6 +91,8 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
     }
 
     const activeDoc = currentDoc;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     stickToBottomRef.current = true;
     setMessages(prev => [
@@ -82,13 +101,16 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
       { role: 'assistant', text: '', sources: [], streaming: true },
     ]);
     setInput('');
-    setThinking(true);
+    setBusy(true);
+
+    let cancelled = false;
 
     try {
       const res = await fetch('/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, filename: activeDoc }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -114,7 +136,6 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let sawToken = false;
       let streamError = null;
 
       while (true) {
@@ -145,10 +166,6 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
               sources: event.sources || [],
             }));
           } else if (event.type === 'token') {
-            if (!sawToken) {
-              sawToken = true;
-              setThinking(false);
-            }
             const chunk = event.content || '';
             if (chunk) {
               updateLastAssistant(msg => ({
@@ -170,24 +187,49 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
 
       updateLastAssistant(msg => ({ ...msg, streaming: false }));
     } catch (err) {
-      setMessages(prev => {
-        const next = [...prev];
-        const last = next[next.length - 1];
-        if (last?.role === 'assistant' && !last.text) {
-          next[next.length - 1] = {
+      if (err?.name === 'AbortError') {
+        cancelled = true;
+        setMessages(prev => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role === 'assistant') {
+            next[next.length - 1] = {
+              ...last,
+              streaming: false,
+              cancelled: true,
+              text: last.text?.trim()
+                ? last.text
+                : 'Generation stopped.',
+            };
+          }
+          return next;
+        });
+      } else {
+        setMessages(prev => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role === 'assistant' && !last.text) {
+            next[next.length - 1] = {
+              role: 'error',
+              text: `Something went wrong: ${err.message}`,
+            };
+            return next;
+          }
+          return [...next, {
             role: 'error',
             text: `Something went wrong: ${err.message}`,
-          };
-          return next;
-        }
-        return [...next, {
-          role: 'error',
-          text: `Something went wrong: ${err.message}`,
-        }];
-      });
-      updateLastAssistant(msg => ({ ...msg, streaming: false }));
+          }];
+        });
+        updateLastAssistant(msg => ({ ...msg, streaming: false }));
+      }
     } finally {
-      setThinking(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+      setBusy(false);
+      if (!cancelled) {
+        // no-op; cancelled path already finalized the message
+      }
     }
   }
 
@@ -203,10 +245,25 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
     : 'Upload a PDF first, then ask questions here…';
 
   const lastMessage = messages[messages.length - 1];
-  const showThinking = thinking && !(lastMessage?.role === 'assistant' && lastMessage.text);
+  const showThinking = busy && !(lastMessage?.role === 'assistant' && lastMessage.text);
 
   return (
     <div className={styles.panel}>
+      {currentDoc && onTogglePreview && (
+        <div className={styles.toolbar}>
+          <span className={styles.toolbarDoc} title={currentDoc}>{currentDoc}</span>
+          <button
+            type="button"
+            className={`${styles.previewToggle} ${previewOpen ? styles.previewToggleOn : ''}`}
+            onClick={onTogglePreview}
+            aria-pressed={previewOpen ? 'true' : 'false'}
+            title={previewOpen ? 'Hide PDF preview' : 'Show PDF preview'}
+          >
+            {previewOpen ? 'Hide PDF' : 'Show PDF'}
+          </button>
+        </div>
+      )}
+
       <div
         className={styles.messages}
         ref={messagesRef}
@@ -220,7 +277,7 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
           if (msg.role === 'assistant' && !msg.text && msg.streaming) {
             return null;
           }
-          return <ChatMessage key={i} {...msg} />;
+          return <ChatMessage key={i} {...msg} onSourceClick={onSourceClick} />;
         })}
 
         {showThinking && (
@@ -234,7 +291,7 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className={`${styles.inputRow} ${thinking ? styles.glowing : ''}`}>
+      <div className={`${styles.inputRow} ${busy ? styles.glowing : ''}`}>
         <textarea
           ref={textareaRef}
           className={styles.textarea}
@@ -242,18 +299,31 @@ export default function ChatPanel({ currentDoc, messages, setMessages }) {
           onChange={e => setInput(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          disabled={thinking || !currentDoc}
+          disabled={busy || !currentDoc}
           rows={1}
           aria-label="Your question"
         />
-        <button
-          className={styles.sendBtn}
-          onClick={sendQuestion}
-          disabled={!input.trim() || thinking || !currentDoc}
-          aria-label="Send question"
-        >
-          {thinking ? '…' : '↑'}
-        </button>
+        {busy ? (
+          <button
+            type="button"
+            className={styles.stopBtn}
+            onClick={stopGeneration}
+            aria-label="Stop generating"
+            title="Stop generating"
+          >
+            <span className={styles.stopIcon} aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.sendBtn}
+            onClick={sendQuestion}
+            disabled={!input.trim() || !currentDoc}
+            aria-label="Send question"
+          >
+            ↑
+          </button>
+        )}
       </div>
     </div>
   );
