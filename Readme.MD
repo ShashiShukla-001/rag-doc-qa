@@ -8,9 +8,6 @@ Built with **React**, **FastAPI**, **LangChain**, **ChromaDB**, and **Ollama**. 
 
 ## Screenshots
 
-> Capture these from `http://localhost:3000` (full window, dark theme) and save under `docs/screenshots/`.  
-> Existing files: `01`–`04`. **Add `05`–`07`** for the newer PDF / stop UX.
-
 <!-- SCREENSHOT: Library + upload left, empty chat right, optional PDF tab on the edge -->
 ![Main UI — library and chat](docs/screenshots/01-main-ui.png)
 
